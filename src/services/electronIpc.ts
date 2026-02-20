@@ -88,6 +88,14 @@ export const ipc = {
   getRelationEvidence: (params: { relationId: string; limit?: number }): Promise<EvidenceResult> =>
     getAPI().getRelationEvidence(params),
 
+  getCanonicalEdgeEvidence: (params: {
+    canonicalSource: string;
+    canonicalTarget: string;
+    relation?: string;
+    limit?: number;
+  }): Promise<EvidenceResult> =>
+    getAPI().getCanonicalEdgeEvidence(params),
+
   // 🧪 Dev utilities
   getDiagnostics: () => getAPI().getDiagnostics(),
   resetDatabase: () => getAPI().resetDatabase(),

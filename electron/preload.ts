@@ -77,4 +77,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // --- Relation Evidence ---
   getRelationEvidence: (params: { relationId: string; limit?: number }) =>
     ipcRenderer.invoke("get-relation-evidence", params),
+
+  getCanonicalEdgeEvidence: (params: {
+    canonicalSource: string;
+    canonicalTarget: string;
+    relation?: string;
+    limit?: number;
+  }) => ipcRenderer.invoke("get-canonical-edge-evidence", params),
 });

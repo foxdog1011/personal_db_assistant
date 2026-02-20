@@ -27,7 +27,8 @@ const GraphPage: React.FC = () => {
   const [minSupportingNotes, setMinSupportingNotes] = useState(1);
   const [minSupportCount] = useState(1); // note-mode param; no slider yet (default: show all)
   const [selectedEdge, setSelectedEdge] = useState<{
-    relationId: string;
+    relationId?: string;
+    canonical?: { source: string; target: string; relation?: string };
     fromLabel: string;
     toLabel: string;
   } | null>(null);
@@ -261,9 +262,17 @@ const GraphPage: React.FC = () => {
             edges={filteredEdges}
             mode={viewMode}
             onSelectNode={handleSelectNode}
-            onSelectEdge={(relationId, fromLabel, toLabel) =>
-              setSelectedEdge({ relationId, fromLabel, toLabel })
-            }
+            onSelectEdge={({ relationId, fromLabel, toLabel, edgeLabel }) => {
+              if (graphMode === "global") {
+                setSelectedEdge({
+                  canonical: { source: fromLabel, target: toLabel, relation: edgeLabel },
+                  fromLabel,
+                  toLabel,
+                });
+              } else {
+                setSelectedEdge({ relationId, fromLabel, toLabel });
+              }
+            }}
             focusNodeLabel={focusLabel}
           />
         )}
@@ -282,6 +291,7 @@ const GraphPage: React.FC = () => {
         <Modal open={!!selectedEdge} onClose={() => setSelectedEdge(null)}>
           <EdgeEvidencePanel
             relationId={selectedEdge.relationId}
+            canonical={selectedEdge.canonical}
             fromLabel={selectedEdge.fromLabel}
             toLabel={selectedEdge.toLabel}
             onClose={() => setSelectedEdge(null)}

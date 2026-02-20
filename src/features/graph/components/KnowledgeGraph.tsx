@@ -52,8 +52,13 @@ interface Props {
   nodes: GraphNode[];
   edges: GraphEdge[];
   onSelectNode: (id: number) => void;
-  /** Called when an edge is clicked; receives (relationId, fromLabel, toLabel) */
-  onSelectEdge?: (relationId: string, fromLabel: string, toLabel: string) => void;
+  /** Called when an edge is clicked */
+  onSelectEdge?: (params: {
+    relationId?: string;
+    fromLabel: string;
+    toLabel: string;
+    edgeLabel?: string;
+  }) => void;
   mode?: "triples" | "relations" | "concept" | "insight";
   /** When set, find the node whose label matches and focus the camera on it */
   focusNodeLabel?: string;
@@ -137,8 +142,13 @@ const KnowledgeGraph: React.FC<Props> = ({
       if (!onSelectEdge || !params.edges?.length) return;
       const edgeVizId = params.edges[0];
       const edge = (network.body.data.edges as any).get(edgeVizId) as GraphEdge;
-      if (!edge?.relationId) return;
-      onSelectEdge(edge.relationId, String(edge.from), String(edge.to));
+      if (!edge) return;
+      onSelectEdge({
+        relationId: edge.relationId,
+        fromLabel: String(edge.from),
+        toLabel: String(edge.to),
+        edgeLabel: edge.label,
+      });
     });
 
     /* 🧠 hover 提示 */

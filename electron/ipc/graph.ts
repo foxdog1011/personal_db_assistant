@@ -2,7 +2,7 @@ import { ipcMain } from "electron";
 import type sqlite3 from "sqlite3";
 import type OpenAI from "openai";
 import { extractTriples } from "../ai/extractTriples";
-import { saveTriples, getRelationEvidence } from "../db/query";
+import { saveTriples, getRelationEvidence, getCanonicalEdgeEvidence } from "../db/query";
 
 export interface IpcContext {
   db: sqlite3.Database;
@@ -234,7 +234,32 @@ export function registerGraphIpc(ctx: IpcContext) {
     return result;
   });
 
+  /* =====================================================
+   * 📋 取得 Canonical Edge Evidence（global mode — 跨多 relation_id 聚合）
+   * ===================================================== */
+  ipcMain.handle(
+    "get-canonical-edge-evidence",
+    async (
+      _,
+      args: { canonicalSource: string; canonicalTarget: string; relation?: string; limit?: number }
+    ) => {
+      if (!args?.canonicalSource || !args?.canonicalTarget) return { evidence: [] };
+      const limit = args.limit ?? 10;
+      const result = await getCanonicalEdgeEvidence(db, {
+        canonicalSource: args.canonicalSource,
+        canonicalTarget: args.canonicalTarget,
+        relation: args.relation,
+        limit,
+      });
+      console.log(
+        `[GRAPH] canonical-evidence src=${args.canonicalSource} tgt=${args.canonicalTarget}` +
+        ` rel=${args.relation ?? "-"} limit=${limit} returned=${result.evidence.length}`
+      );
+      return result;
+    }
+  );
+
   console.log(
-    "[IPC] ✅ Graph IPC registered (get-knowledge-graph / rebuild-relations / extract-triples / get-relation-evidence)"
+    "[IPC] ✅ Graph IPC registered (get-knowledge-graph / rebuild-relations / extract-triples / get-relation-evidence / get-canonical-edge-evidence)"
   );
 }

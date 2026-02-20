@@ -4,6 +4,8 @@ export interface EvidenceItem {
   title: string;
   snippet: string;
   createdAt: string;
+  /** concept_relations.id — present in canonical query results */
+  relationId?: string;
 }
 
 export interface EvidenceResult {
@@ -110,6 +112,12 @@ export interface ElectronAPI {
 
   // --- Relation Evidence ---
   getRelationEvidence: (params: { relationId: string; limit?: number }) => Promise<EvidenceResult>;
+  getCanonicalEdgeEvidence: (params: {
+    canonicalSource: string;
+    canonicalTarget: string;
+    relation?: string;
+    limit?: number;
+  }) => Promise<EvidenceResult>;
 
   // --- Dev Utilities ---
   getDiagnostics: () => Promise<DiagnosticsResult>;

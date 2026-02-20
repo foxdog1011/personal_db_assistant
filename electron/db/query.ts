@@ -41,6 +41,8 @@ export interface EvidenceItem {
   title: string;
   snippet: string;
   createdAt: string;
+  /** concept_relations.id — present in canonical query results */
+  relationId?: string;
 }
 
 export function upsertRelationEvidence(
@@ -112,6 +114,70 @@ function extractSnippet(content: string, source: string, target: string): string
     }
   }
   return content.slice(0, 150).trim();
+}
+
+/**
+ * Retrieve supporting evidence for a canonical edge pair (global mode).
+ * Unions all relation_evidence rows whose concept_relation has the given
+ * canonical_source + canonical_target (bidirectional) and optional relation filter.
+ * Ordered by concept_relations.support_count DESC so strongest relations surface first.
+ */
+export function getCanonicalEdgeEvidence(
+  db: sqlite3.Database,
+  params: {
+    canonicalSource: string;
+    canonicalTarget: string;
+    relation?: string;
+    limit?: number;
+  }
+): Promise<{ evidence: EvidenceItem[] }> {
+  return new Promise((resolve, reject) => {
+    const { canonicalSource, canonicalTarget, relation, limit = 10 } = params;
+
+    const whereParts: string[] = [
+      `(
+        (COALESCE(cr.canonical_source, cr.source) = ? AND COALESCE(cr.canonical_target, cr.target) = ?)
+        OR
+        (COALESCE(cr.canonical_source, cr.source) = ? AND COALESCE(cr.canonical_target, cr.target) = ?)
+      )`,
+    ];
+    // A→B and B→A both covered
+    const sqlParams: any[] = [
+      canonicalSource, canonicalTarget,
+      canonicalTarget, canonicalSource,
+    ];
+
+    if (relation) {
+      whereParts.push("cr.relation = ?");
+      sqlParams.push(relation);
+    }
+
+    sqlParams.push(limit);
+
+    const sql = `
+      SELECT re.note_id, re.snippet, re.created_at,
+             cr.id AS relationId,
+             SUBSTR(COALESCE(NULLIF(n.summary, ''), n.content), 1, 30) AS title
+      FROM concept_relations cr
+      JOIN relation_evidence re ON re.relation_id = cr.id
+      JOIN notes n ON n.id = re.note_id
+      WHERE ${whereParts.join(" AND ")}
+      ORDER BY cr.support_count DESC, cr.last_seen_at DESC
+      LIMIT ?
+    `;
+
+    db.all(sql, sqlParams, (err, rows: any[]) => {
+      if (err) return reject(err);
+      const evidence: EvidenceItem[] = (rows || []).map((r) => ({
+        noteId: String(r.note_id),
+        title: r.title || "",
+        snippet: r.snippet || "",
+        createdAt: r.created_at || "",
+        relationId: String(r.relationId),
+      }));
+      resolve({ evidence });
+    });
+  });
 }
 
 /**

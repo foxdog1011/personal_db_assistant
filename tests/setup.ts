@@ -29,6 +29,7 @@ if (!(window as any).electronAPI) {
     getRelatedNotes: async () => ({ related: [] }),
     getSemanticNotes: async () => ({ related: [] }),
     getRelationEvidence: async () => ({ evidence: [] }),
+    getCanonicalEdgeEvidence: async () => ({ evidence: [] }),
   };
 }
 

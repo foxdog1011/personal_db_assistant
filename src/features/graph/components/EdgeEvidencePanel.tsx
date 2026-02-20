@@ -3,24 +3,46 @@ import { Skeleton } from "@/features/common/ui/Skeleton";
 import type { EvidenceItem } from "@/types/electron-api";
 
 interface Props {
-  relationId: string;
+  /** Note-mode: fetch evidence by exact concept_relations.id */
+  relationId?: string;
+  /** Global-mode: fetch evidence by canonical source/target pair */
+  canonical?: { source: string; target: string; relation?: string };
   fromLabel: string;
   toLabel: string;
   onClose: () => void;
 }
 
-export function EdgeEvidencePanel({ relationId, fromLabel, toLabel, onClose }: Props) {
+export function EdgeEvidencePanel({
+  relationId,
+  canonical,
+  fromLabel,
+  toLabel,
+  onClose,
+}: Props) {
   const [loading, setLoading] = useState(true);
   const [evidence, setEvidence] = useState<EvidenceItem[]>([]);
 
+  // Stable key to re-trigger the effect when the edge changes
+  const queryKey = canonical
+    ? JSON.stringify({ cs: canonical.source, ct: canonical.target, rel: canonical.relation ?? "" })
+    : String(relationId ?? "");
+
   useEffect(() => {
     setLoading(true);
-    window.electronAPI
-      .getRelationEvidence({ relationId, limit: 5 })
+    const fetch = canonical
+      ? window.electronAPI.getCanonicalEdgeEvidence({
+          canonicalSource: canonical.source,
+          canonicalTarget: canonical.target,
+          relation: canonical.relation,
+          limit: 5,
+        })
+      : window.electronAPI.getRelationEvidence({ relationId: relationId!, limit: 5 });
+
+    fetch
       .then((res) => setEvidence(res.evidence || []))
       .catch(() => setEvidence([]))
       .finally(() => setLoading(false));
-  }, [relationId]);
+  }, [queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleItemClick = (noteId: string) => {
     window.location.hash = `#/graph?noteId=${noteId}`;

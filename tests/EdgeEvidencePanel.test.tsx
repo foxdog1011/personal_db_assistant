@@ -1,11 +1,12 @@
 /**
  * tests/EdgeEvidencePanel.test.tsx
  *
- * E4 UI tests (4):
- *   1. shows loading skeleton while fetching, then removes it after resolve
- *   2. calls getRelationEvidence with correct relationId
- *   3. renders evidence items; clicking item sets location.hash and calls onClose
+ * Tests (5):
+ *   1. shows loading skeleton while fetching, then removed after resolve
+ *   2. calls getRelationEvidence with correct relationId (relation mode)
+ *   3. renders evidence items; clicking item navigates hash + calls onClose
  *   4. shows empty state when evidence is empty
+ *   f. in canonical mode, calls getCanonicalEdgeEvidence (not getRelationEvidence)
  */
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -27,12 +28,15 @@ const EVIDENCE = [
 
 describe("EdgeEvidencePanel", () => {
   let getRelationEvidence: ReturnType<typeof vi.fn>;
+  let getCanonicalEdgeEvidence: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     getRelationEvidence = vi.fn().mockResolvedValue({ evidence: EVIDENCE });
+    getCanonicalEdgeEvidence = vi.fn().mockResolvedValue({ evidence: EVIDENCE });
     (window as any).electronAPI = {
       ...((window as any).electronAPI || {}),
       getRelationEvidence,
+      getCanonicalEdgeEvidence,
     };
     window.location.hash = "";
   });
@@ -58,10 +62,8 @@ describe("EdgeEvidencePanel", () => {
       />
     );
 
-    // Loading skeleton should be present immediately
     expect(screen.getByTestId("evidence-loading")).toBeInTheDocument();
 
-    // Resolve the promise
     resolveEvidence({ evidence: EVIDENCE });
 
     await waitFor(() =>
@@ -71,7 +73,7 @@ describe("EdgeEvidencePanel", () => {
   });
 
   // Test 2 ─────────────────────────────────────────────────────────────────────
-  it("calls getRelationEvidence with the correct relationId and limit", async () => {
+  it("calls getRelationEvidence with the correct relationId and limit in relation mode", async () => {
     render(
       <EdgeEvidencePanel
         relationId="42"
@@ -84,6 +86,7 @@ describe("EdgeEvidencePanel", () => {
     await waitFor(() =>
       expect(getRelationEvidence).toHaveBeenCalledWith({ relationId: "42", limit: 5 })
     );
+    expect(getCanonicalEdgeEvidence).not.toHaveBeenCalled();
   });
 
   // Test 3 ─────────────────────────────────────────────────────────────────────
@@ -123,5 +126,28 @@ describe("EdgeEvidencePanel", () => {
     await waitFor(() => screen.getByTestId("evidence-empty"));
     expect(screen.getByTestId("evidence-empty")).toBeInTheDocument();
     expect(screen.queryByTestId("evidence-loading")).not.toBeInTheDocument();
+  });
+
+  // Test f ─────────────────────────────────────────────────────────────────────
+  it("f) canonical mode calls getCanonicalEdgeEvidence (not getRelationEvidence)", async () => {
+    render(
+      <EdgeEvidencePanel
+        canonical={{ source: "alice", target: "bob", relation: "knows" }}
+        fromLabel="alice"
+        toLabel="bob"
+        onClose={() => {}}
+      />
+    );
+
+    await waitFor(() =>
+      expect(getCanonicalEdgeEvidence).toHaveBeenCalledWith({
+        canonicalSource: "alice",
+        canonicalTarget: "bob",
+        relation: "knows",
+        limit: 5,
+      })
+    );
+    expect(getRelationEvidence).not.toHaveBeenCalled();
+    await waitFor(() => screen.getByTestId("evidence-item-10"));
   });
 });

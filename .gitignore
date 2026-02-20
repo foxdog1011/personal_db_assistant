@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-electron/
+.vite/
+
+# Test / coverage / logs
+coverage/
+logs/
+*.log
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Local databases (data files only — not source code)
+db/notes.db
+db/notes.db-*
+*.db
+*.sqlite
+*.sqlite3
+
+# OS / editor
+.DS_Store
+Thumbs.db

@@ -34,6 +34,34 @@ export function saveTriples(db: sqlite3.Database, noteId: number, triples: Tripl
   });
 }
 
+// ── Sentence Picker ────────────────────────────────────────────────────────────
+
+/**
+ * Pick the best sentence from content that mentions source/target.
+ * Confidence:
+ *   0.9 → sentence contains both source and target
+ *   0.6 → sentence contains one of the terms
+ *   0.3 → fallback: first 150 chars of content
+ */
+export function pickBestSentence(
+  content: string,
+  source: string,
+  target: string
+): { sentence: string; confidence: number } {
+  const sentences = content.split(/[.!?。！？\n]+/).map(s => s.trim()).filter(s => s.length > 0);
+  const srcL = source.toLowerCase();
+  const tgtL = target.toLowerCase();
+  for (const s of sentences) {
+    const sL = s.toLowerCase();
+    if (sL.includes(srcL) && sL.includes(tgtL)) return { sentence: s, confidence: 0.9 };
+  }
+  for (const s of sentences) {
+    const sL = s.toLowerCase();
+    if (sL.includes(srcL) || sL.includes(tgtL)) return { sentence: s, confidence: 0.6 };
+  }
+  return { sentence: content.slice(0, 150).trim(), confidence: 0.3 };
+}
+
 // ── Relation Evidence ──────────────────────────────────────────────────────────
 
 export interface EvidenceItem {
@@ -43,6 +71,10 @@ export interface EvidenceItem {
   createdAt: string;
   /** concept_relations.id — present in canonical query results */
   relationId?: string;
+  /** Best matching sentence from note content */
+  bestSentence?: string;
+  /** Confidence score: 0.9 (both terms), 0.6 (one term), 0.3 (fallback) */
+  confidence?: number;
 }
 
 export function upsertRelationEvidence(
@@ -54,20 +86,28 @@ export function upsertRelationEvidence(
     sourceText: string;
     start?: number | null;
     end?: number | null;
+    bestSentence?: string | null;
+    confidence?: number | null;
   }
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const { relationId, noteId, snippet, sourceText, start = null, end = null } = params;
+    const {
+      relationId, noteId, snippet, sourceText,
+      start = null, end = null,
+      bestSentence = null, confidence = null,
+    } = params;
     db.run(
       `INSERT INTO relation_evidence
-         (relation_id, note_id, snippet, source_text, source_offset_start, source_offset_end)
-       VALUES (?, ?, ?, ?, ?, ?)
+         (relation_id, note_id, snippet, source_text, source_offset_start, source_offset_end, best_sentence, confidence)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(relation_id, note_id) DO UPDATE SET
          snippet = excluded.snippet,
          source_text = excluded.source_text,
          source_offset_start = excluded.source_offset_start,
-         source_offset_end = excluded.source_offset_end`,
-      [relationId, noteId, snippet, sourceText, start, end],
+         source_offset_end = excluded.source_offset_end,
+         best_sentence = excluded.best_sentence,
+         confidence = excluded.confidence`,
+      [relationId, noteId, snippet, sourceText, start, end, bestSentence, confidence],
       (err) => (err ? reject(err) : resolve())
     );
   });
@@ -80,7 +120,7 @@ export function getRelationEvidence(
   return new Promise((resolve, reject) => {
     const { relationId, limit = 5 } = params;
     db.all(
-      `SELECT re.note_id, re.snippet, re.created_at,
+      `SELECT re.note_id, re.snippet, re.created_at, re.best_sentence, re.confidence,
               SUBSTR(COALESCE(NULLIF(n.summary, ''), n.content), 1, 30) AS title
        FROM relation_evidence re
        JOIN notes n ON re.note_id = n.id
@@ -95,6 +135,8 @@ export function getRelationEvidence(
           title: r.title || "",
           snippet: r.snippet || "",
           createdAt: r.created_at || "",
+          bestSentence: r.best_sentence || undefined,
+          confidence: r.confidence != null ? Number(r.confidence) : undefined,
         }));
         resolve({ evidence });
       }
@@ -155,7 +197,7 @@ export function getCanonicalEdgeEvidence(
     sqlParams.push(limit);
 
     const sql = `
-      SELECT re.note_id, re.snippet, re.created_at,
+      SELECT re.note_id, re.snippet, re.created_at, re.best_sentence, re.confidence,
              cr.id AS relationId,
              SUBSTR(COALESCE(NULLIF(n.summary, ''), n.content), 1, 30) AS title
       FROM concept_relations cr
@@ -174,6 +216,8 @@ export function getCanonicalEdgeEvidence(
         snippet: r.snippet || "",
         createdAt: r.created_at || "",
         relationId: String(r.relationId),
+        bestSentence: r.best_sentence || undefined,
+        confidence: r.confidence != null ? Number(r.confidence) : undefined,
       }));
       resolve({ evidence });
     });
@@ -182,7 +226,7 @@ export function getCanonicalEdgeEvidence(
 
 /**
  * After saveTriples, call this with the note content to write/update evidence rows.
- * Fetches content once; iterates all concept_relations for this note.
+ * Computes pickBestSentence for each relation and stores with the upsert.
  */
 export function saveEvidenceForNote(
   db: sqlite3.Database,
@@ -200,12 +244,15 @@ export function saveEvidenceForNote(
             const src: string = row.canonical_source || row.source;
             const tgt: string = row.canonical_target || row.target;
             const snippet = extractSnippet(content, src, tgt);
-            console.log(`[EVIDENCE] relId=${row.id} noteId=${noteId} snippetLen=${snippet.length}`);
+            const { sentence: bestSentence, confidence } = pickBestSentence(content, src, tgt);
+            console.log(`[EVIDENCE] relId=${row.id} noteId=${noteId} snippetLen=${snippet.length} confidence=${confidence}`);
             await upsertRelationEvidence(db, {
               relationId: row.id,
               noteId,
               snippet,
               sourceText: "content",
+              bestSentence,
+              confidence,
             });
           }
           resolve();

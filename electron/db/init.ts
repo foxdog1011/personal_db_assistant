@@ -121,6 +121,15 @@ export function initDatabase() {
       db!.run("CREATE INDEX IF NOT EXISTS idx_evi_relation ON relation_evidence(relation_id)");
       db!.run("CREATE INDEX IF NOT EXISTS idx_evi_note ON relation_evidence(note_id)");
 
+      // Migrate relation_evidence: add best_sentence, confidence (idempotent)
+      db!.all(`PRAGMA table_info(relation_evidence)`, [], (_, rows) => {
+        const names = new Set((rows as any[] || []).map((r: any) => r.name));
+        if (!names.has("best_sentence"))
+          db!.run("ALTER TABLE relation_evidence ADD COLUMN best_sentence TEXT");
+        if (!names.has("confidence"))
+          db!.run("ALTER TABLE relation_evidence ADD COLUMN confidence REAL");
+      });
+
       db!.run(
         "UPDATE embeddings SET vector = NULL WHERE typeof(vector) != 'text';",
         (err) => {

@@ -6,6 +6,10 @@ export interface EvidenceItem {
   createdAt: string;
   /** concept_relations.id — present in canonical query results */
   relationId?: string;
+  /** Best matching sentence from note content */
+  bestSentence?: string;
+  /** Confidence score: 0.9 (both terms), 0.6 (one term), 0.3 (fallback) */
+  confidence?: number;
 }
 
 export interface EvidenceResult {

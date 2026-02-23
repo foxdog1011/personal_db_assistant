@@ -14,16 +14,28 @@ import type { Database } from "sqlite3";
 
 function upsertEvidence(
   db: Database,
-  params: { relationId: number; noteId: number; snippet: string; sourceText: string }
+  params: {
+    relationId: number;
+    noteId: number;
+    snippet: string;
+    sourceText: string;
+    bestSentence?: string | null;
+    confidence?: number | null;
+  }
 ): Promise<void> {
   return new Promise((resolve, reject) => {
+    const { relationId, noteId, snippet, sourceText,
+            bestSentence = null, confidence = null } = params;
     db.run(
-      `INSERT INTO relation_evidence (relation_id, note_id, snippet, source_text)
-       VALUES (?, ?, ?, ?)
+      `INSERT INTO relation_evidence
+         (relation_id, note_id, snippet, source_text, best_sentence, confidence)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON CONFLICT(relation_id, note_id) DO UPDATE SET
          snippet = excluded.snippet,
-         source_text = excluded.source_text`,
-      [params.relationId, params.noteId, params.snippet, params.sourceText],
+         source_text = excluded.source_text,
+         best_sentence = excluded.best_sentence,
+         confidence = excluded.confidence`,
+      [relationId, noteId, snippet, sourceText, bestSentence, confidence],
       (err) => (err ? reject(err) : resolve())
     );
   });
@@ -116,5 +128,37 @@ describe("relation_evidence", () => {
 
     const rows = await getEvidence(db, { relationId: relId, limit: 2 });
     expect(rows.length).toBe(2);
+  });
+
+  // Test 4 ─────────────────────────────────────────────────────────────────────
+  it("4) upsert updates best_sentence and confidence in place (no duplicate row)", async () => {
+    const db = getDb()!;
+    const note = await insertNote("alice knows bob in this story", "test", "", "text");
+    const relId = await insertRelation(db, note.id);
+
+    await upsertEvidence(db, {
+      relationId: relId,
+      noteId: note.id,
+      snippet: "first snippet",
+      sourceText: "content",
+      bestSentence: "alice meets bob here",
+      confidence: 0.9,
+    });
+
+    // Upsert again — should update in place, not insert a new row
+    await upsertEvidence(db, {
+      relationId: relId,
+      noteId: note.id,
+      snippet: "second snippet",
+      sourceText: "content",
+      bestSentence: "alice and bob are friends",
+      confidence: 0.6,
+    });
+
+    const rows = await getEvidence(db, { relationId: relId });
+    expect(rows.length).toBe(1);
+    expect(rows[0].snippet).toBe("second snippet");
+    expect(rows[0].best_sentence).toBe("alice and bob are friends");
+    expect(rows[0].confidence).toBe(0.6);
   });
 });

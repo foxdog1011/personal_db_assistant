@@ -59,13 +59,16 @@ async function insertEvidence(
   db: Database,
   relationId: number,
   noteId: number,
-  snippet: string
+  snippet: string,
+  bestSentence?: string,
+  confidence?: number
 ): Promise<void> {
   await run(
     db,
-    `INSERT OR REPLACE INTO relation_evidence (relation_id, note_id, snippet, source_text)
-     VALUES (?, ?, ?, 'content')`,
-    [relationId, noteId, snippet]
+    `INSERT OR REPLACE INTO relation_evidence
+       (relation_id, note_id, snippet, source_text, best_sentence, confidence)
+     VALUES (?, ?, ?, 'content', ?, ?)`,
+    [relationId, noteId, snippet, bestSentence ?? null, confidence ?? null]
   );
 }
 
@@ -103,7 +106,7 @@ function getCanonicalEdgeEvidence(
     sqlParams.push(limit);
 
     const sql = `
-      SELECT re.note_id, re.snippet, re.created_at,
+      SELECT re.note_id, re.snippet, re.created_at, re.best_sentence, re.confidence,
              cr.id AS relationId,
              SUBSTR(COALESCE(NULLIF(n.summary, ''), n.content), 1, 30) AS title
       FROM concept_relations cr
@@ -122,6 +125,8 @@ function getCanonicalEdgeEvidence(
         snippet: r.snippet || "",
         createdAt: r.created_at || "",
         relationId: String(r.relationId),
+        bestSentence: r.best_sentence || undefined,
+        confidence: r.confidence != null ? Number(r.confidence) : undefined,
       }));
       resolve({ evidence });
     });
@@ -269,7 +274,7 @@ describe("getCanonicalEdgeEvidence", () => {
   });
 
   // e) IPC handler shape: returns EvidenceItem array with expected fields ────
-  it("e) returns well-formed EvidenceItem objects with noteId, title, snippet, relationId", async () => {
+  it("e) returns well-formed EvidenceItem objects including bestSentence and confidence", async () => {
     const db = getDb()!;
 
     const note = await insertNote("shape test content for ipc check", "ce", "", "text");
@@ -277,7 +282,7 @@ describe("getCanonicalEdgeEvidence", () => {
       source: "ipc", relation: "tests", target: "shape",
       noteId: note.id, canonicalSource: "ipc", canonicalTarget: "shape",
     });
-    await insertEvidence(db, relId, note.id, "ipc shape snippet");
+    await insertEvidence(db, relId, note.id, "ipc shape snippet", "ipc tests shape directly", 0.9);
 
     const { evidence } = await getCanonicalEdgeEvidence(db, {
       canonicalSource: "ipc", canonicalTarget: "shape",
@@ -292,5 +297,8 @@ describe("getCanonicalEdgeEvidence", () => {
     expect(item.snippet).toBe("ipc shape snippet");
     expect(typeof item.relationId).toBe("string");
     expect(item.createdAt).toBeTruthy();
+    // new fields
+    expect(item.bestSentence).toBe("ipc tests shape directly");
+    expect(item.confidence).toBe(0.9);
   });
 });

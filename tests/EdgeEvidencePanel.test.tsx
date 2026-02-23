@@ -1,12 +1,15 @@
 /**
  * tests/EdgeEvidencePanel.test.tsx
  *
- * Tests (5):
+ * Tests (8):
  *   1. shows loading skeleton while fetching, then removed after resolve
  *   2. calls getRelationEvidence with correct relationId (relation mode)
  *   3. renders evidence items; clicking item navigates hash + calls onClose
  *   4. shows empty state when evidence is empty
  *   f. in canonical mode, calls getCanonicalEdgeEvidence (not getRelationEvidence)
+ *   6. renders confidence badge with correct percentage when confidence present
+ *   7. renders <mark> elements when bestSentence is present (safe highlight)
+ *   8. clicking item navigates hash + calls onClose (with bestSentence/confidence present)
  */
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -21,6 +24,8 @@ const EVIDENCE = [
     title: "Alice knows Bob",
     snippet: "alice knows bob in this story",
     createdAt: "2024-01-01T00:00:00Z",
+    bestSentence: "alice knows bob in this story",
+    confidence: 0.9,
   },
 ];
 
@@ -149,5 +154,62 @@ describe("EdgeEvidencePanel", () => {
     );
     expect(getRelationEvidence).not.toHaveBeenCalled();
     await waitFor(() => screen.getByTestId("evidence-item-10"));
+  });
+
+  // Test 6 ─────────────────────────────────────────────────────────────────────
+  it("6) renders confidence badge showing rounded percentage when confidence is present", async () => {
+    render(
+      <EdgeEvidencePanel
+        relationId="5"
+        fromLabel="alice"
+        toLabel="bob"
+        onClose={() => {}}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId("evidence-item-10"));
+    const badge = screen.getByTestId("evidence-confidence-10");
+    expect(badge).toBeInTheDocument();
+    expect(badge.textContent).toBe("90%"); // Math.round(0.9 * 100)
+  });
+
+  // Test 7 ─────────────────────────────────────────────────────────────────────
+  it("7) renders <mark> highlight elements for terms when bestSentence is present", async () => {
+    render(
+      <EdgeEvidencePanel
+        relationId="5"
+        fromLabel="alice"
+        toLabel="bob"
+        onClose={() => {}}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId("evidence-item-10"));
+
+    // The bestSentence contains "alice" and "bob" — both should be wrapped in <mark>
+    const item = screen.getByTestId("evidence-item-10");
+    const marks = item.querySelectorAll("mark");
+    expect(marks.length).toBeGreaterThan(0);
+  });
+
+  // Test 8 ─────────────────────────────────────────────────────────────────────
+  it("8) clicking item with bestSentence/confidence still sets location.hash and calls onClose", async () => {
+    const onClose = vi.fn();
+
+    render(
+      <EdgeEvidencePanel
+        relationId="5"
+        fromLabel="alice"
+        toLabel="bob"
+        onClose={onClose}
+      />
+    );
+
+    await waitFor(() => screen.getByTestId("evidence-item-10"));
+
+    fireEvent.click(screen.getByTestId("evidence-item-10"));
+
+    expect(window.location.hash).toBe("#/graph?noteId=10");
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

@@ -87,6 +87,8 @@ export function initDatabase(dbFilePath: string) {
         source_text TEXT NOT NULL,
         source_offset_start INTEGER,
         source_offset_end INTEGER,
+        best_sentence TEXT,
+        confidence REAL,
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         UNIQUE(relation_id, note_id)
       )

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "jsx": "react-jsx",
+    "rootDir": "./",
+    "outDir": "./dist-electron",
+    "noEmit": false,
+    "sourceMap": true,
+    "types": ["node", "electron", "vite/client"],
+    "ignoreDeprecations": "5.0",
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["*"]
+    }
+  },
+  "include": ["src", "electron", "src/global.d.ts"],
+  "exclude": ["node_modules", "dist", "dist-electron"]
+}

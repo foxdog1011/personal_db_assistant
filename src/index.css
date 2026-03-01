@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  scroll-behavior: smooth;
+}
+
+/* 讓 hover 陰影更柔和 */
+.card {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+.card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+}
+
+
+/* 按鈕風格 */
+.btn {
+  @apply px-5 py-2 rounded-xl font-medium transition ease-in-out;
+}
+.btn-primary {
+  @apply bg-indigo-500 hover:bg-indigo-600 text-white dark:text-gray-100;
+}
+.btn-success {
+  @apply bg-green-500 hover:bg-green-600 text-white dark:text-gray-100;
+}
+.btn-danger {
+  @apply bg-red-500 hover:bg-red-600 text-white dark:text-gray-100;
+}
+.btn-secondary {
+  @apply bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100;
+}
+
+/* 輸入框與文字區 */
+.input, .textarea {
+  @apply w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:outline-none transition;
+}
+
+/* 標籤風格 */
+.tag {
+  @apply px-3 py-1 text-sm rounded-full bg-indigo-100 dark:bg-indigo-700 text-indigo-600 dark:text-indigo-200 cursor-pointer hover:scale-105 transition;
+}
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-animate {
+  animation: modal-fade 0.15s ease-out;
+}
+

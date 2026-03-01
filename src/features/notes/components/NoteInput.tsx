@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ipc } from "@/services/electronIpc";
+import { Button } from "@/features/common/ui/Button";
+import { Chip } from "@/features/common/ui/Chip";
 
 interface NoteInputProps {
   /** 當新增或更新筆記時觸發 */
@@ -109,22 +111,21 @@ const NoteInput: React.FC<NoteInputProps> = ({ onAdd, noteId, onRefresh }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="card border border-gray-200 dark:border-gray-700 overflow-hidden rounded-2xl shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-800"
+      className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all overflow-hidden"
     >
-      {/* Header */}
+      {/* ── Header ─────────────────────────────────────── */}
       <div className="px-5 pt-4 pb-2 flex flex-wrap justify-between items-center gap-2 border-b border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <span
-            className={`px-2 py-1 rounded-md text-xs ${
+            className={`px-2 py-1 rounded-md text-xs font-medium ${
               type === "url"
-                ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-100"
-                : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
+                ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300"
             }`}
           >
             {type === "url" ? "🔗 網址筆記" : "📝 文字筆記"}
           </span>
         </div>
-
         <span className="text-xs text-gray-400 dark:text-gray-500 italic">
           {type === "text"
             ? "可輸入任意筆記內容（Enter 送出）"
@@ -132,7 +133,7 @@ const NoteInput: React.FC<NoteInputProps> = ({ onAdd, noteId, onRefresh }) => {
         </span>
       </div>
 
-      {/* Content Input */}
+      {/* ── Content textarea ────────────────────────────── */}
       <div className="px-5 py-4">
         <textarea
           ref={inputRef}
@@ -154,60 +155,58 @@ const NoteInput: React.FC<NoteInputProps> = ({ onAdd, noteId, onRefresh }) => {
         />
       </div>
 
-      {/* Footer */}
+      {/* ── Footer ─────────────────────────────────────── */}
       <div className="px-5 py-3 bg-gray-50 dark:bg-gray-900/40 border-t border-gray-100 dark:border-gray-700 flex flex-wrap items-center justify-between gap-3">
         {/* 標籤輸入 + 自動建議 */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <input
             type="text"
             placeholder="輸入標籤（用逗號分隔）"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-500 transition"
+            className="w-full text-sm px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-indigo-400 transition"
           />
           {suggestedTags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
+            <div className="flex flex-wrap gap-1.5 mt-2">
               {suggestedTags.map((tag) => (
-                <span
+                <Chip
                   key={tag}
                   onClick={() => {
                     const newTags = tags ? `${tags},${tag}` : tag;
                     setTags(newTags);
                   }}
-                  className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-600 hover:text-white transition"
+                  className="cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-800/50 transition"
                 >
                   ＋ {tag}
-                </span>
+                </Chip>
               ))}
             </div>
           )}
         </div>
 
         {/* 按鈕區 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {showAiButton && (
-            <button
+            <Button
               type="button"
               onClick={handleGenerateSummary}
               disabled={loading || !hasNoteId}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition ${
-                hasNoteId
-                  ? "text-white bg-indigo-500 hover:bg-indigo-600"
-                  : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-              } ${loading ? "opacity-60 cursor-not-allowed" : ""}`}
+              variant={hasNoteId ? "primary" : "neutral"}
+              size="sm"
               title={hasNoteId ? "產生 AI 摘要" : "請先儲存筆記再使用 AI 摘要"}
             >
               {loading ? "生成中..." : "✨ AI 摘要"}
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             type="submit"
             disabled={loading || !content.trim()}
-            className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-green-500 hover:bg-green-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            variant="success"
+            size="sm"
           >
             {loading ? "處理中..." : "💾 儲存"}
-          </button>
+          </Button>
         </div>
       </div>
     </form>

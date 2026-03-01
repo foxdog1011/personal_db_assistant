@@ -26,3 +26,9 @@ db/notes.db-*
 # OS / editor
 .DS_Store
 Thumbs.db
+
+# Claude Code local data
+.claude/
+
+# Backup files
+*.bak

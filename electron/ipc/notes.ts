@@ -4,6 +4,7 @@ import type OpenAI from "openai";
 import { extractTriples } from "../ai/extractTriples";
 import { saveTriples } from "../db/query";
 import { buildRelations } from "../services/relation_service";
+import { createNote as createNoteSvc, updateNote as updateNoteSvc, searchNotes as searchNotesSvc } from "../services/notes_service";
 import { summarizeText, generateInsight } from "../services/ai_service";
 import { enqueueJob } from "../services/ai_job_queue";
 import { logger } from "../utils/logger";
@@ -31,67 +32,17 @@ export function registerNoteIpc(ctx: IpcContext) {
 
   /** 💾 新增筆記 */
   ipcMain.handle("add-note", async (_, { content, tags }) => {
-    return new Promise((resolve) => {
-      db.run(
-        `INSERT INTO notes (content, tags, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
-        [content, tags || ""],
-        async function (err) {
-          if (err) {
-            console.error("[DB] add-note:error", err);
-            return resolve({ success: false, error: err.message });
-          }
-
-          const noteId = this.lastID;
-          logger.info("[DB] add-note", { noteId });
-
-          try {
-            await enqueueJob(db, noteId, "summary");
-            await enqueueJob(db, noteId, "triples");
-            await enqueueJob(db, noteId, "embedding");
-          } catch (e: any) {
-            logger.error("[QUEUE] enqueue failed after add-note", { noteId, error: e?.message });
-          }
-
-          resolve({ success: true, id: noteId });
-        }
-      );
-    });
+    return createNoteSvc(db, { content, tags });
   });
 
   /** ✏️ 更新筆記 */
   ipcMain.handle("update-note", async (_, { id, content, tags, insight }) => {
-    return new Promise((resolve) => {
-      db.run(
-        `UPDATE notes SET content=?, tags=?, insight=? WHERE id=?`,
-        [content, tags || "", insight || "", id],
-        async (err) => {
-          if (err) {
-            console.error("[DB] update-note:error", err);
-            return resolve({ success: false });
-          }
-          await buildRelations(db, id, content);
-          console.log(`[DB] update-note: note ${id} updated`);
-          resolve({ success: true });
-        }
-      );
-    });
+    return updateNoteSvc(db, { id, content, tags, insight });
   });
 
   /** 🔍 搜尋筆記 */
   ipcMain.handle("search-note", async (_, { query }) => {
-    return new Promise((resolve) => {
-      db.all(
-        `SELECT * FROM notes WHERE content LIKE ? OR tags LIKE ? ORDER BY created_at DESC`,
-        [`%${query || ""}%`, `%${query || ""}%`],
-        (err, rows) => {
-          if (err) {
-            console.error("[DB] search-note:error", err);
-            return resolve([]);
-          }
-          resolve(rows);
-        }
-      );
-    });
+    return searchNotesSvc(db, { query });
   });
 
   /** 🗑 刪除筆記 */

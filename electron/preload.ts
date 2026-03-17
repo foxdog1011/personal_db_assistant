@@ -67,6 +67,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
   resetDatabase: () => ipcRenderer.invoke("reset-database"),
   clearGraphData: () => ipcRenderer.invoke("clear-graph-data"),
 
+  // --- Agent Runner ---
+  runResearch: (args: { task: string; maxNotes?: number; expandSemantic?: boolean; saveAsNote?: boolean }) =>
+    ipcRenderer.invoke("run-research", args),
+  runKnowledgeTask: (args: { task: string; mode: "brief"|"writing"|"review"; maxNotes?: number; expandSemantic?: boolean; saveAsNote?: boolean }) =>
+    ipcRenderer.invoke("run-knowledge-task", args),
+
   // --- Quick Add & Single Note ---
   quickAddNote: (note: { content: string; tags?: string }) =>
     ipcRenderer.invoke("quick-add-note", note),

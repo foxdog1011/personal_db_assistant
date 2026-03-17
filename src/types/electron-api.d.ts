@@ -122,6 +122,9 @@ export interface ElectronAPI {
     relation?: string;
     limit?: number;
   }) => Promise<EvidenceResult>;
+  // --- Agent Runner ---
+  runResearch: (args: ResearchRunnerInput) => Promise<ResearchRunnerResult>;
+  runKnowledgeTask: (args: KnowledgeTaskRunnerInput) => Promise<KnowledgeTaskRunnerResult>;
 
   // --- Dev Utilities ---
   getDiagnostics: () => Promise<DiagnosticsResult>;
@@ -137,3 +140,57 @@ declare global {
 }
 
 export {};
+
+// ── Research Runner types (renderer) ─────────────────────────────────────────
+export interface ResearchRunnerInput {
+  task: string;
+  maxNotes?: number;
+  expandSemantic?: boolean;
+  saveAsNote?: boolean;
+}
+
+export interface ResearchSelectedNoteInfo {
+  id: number;
+  preview: string;
+  source: "keyword" | "semantic";
+}
+
+export interface ResearchRunnerResult {
+  task: string;
+  selected: ResearchSelectedNoteInfo[];
+  summary: string;
+  createdNoteId?: number;
+  trace?: {
+    keywordHits: number[];
+    semanticSeedIds?: number[];
+    semanticAddedIds?: number[];
+  };
+}
+
+// ── Knowledge Task Runner types (renderer) ───────────────────────────────────
+export type KnowledgeTaskMode = "brief" | "writing" | "review";
+
+export interface KnowledgeTaskRunnerInput {
+  task: string;
+  mode: KnowledgeTaskMode;
+  maxNotes?: number;
+  expandSemantic?: boolean;
+  saveAsNote?: boolean;
+}
+
+export interface KnowledgeTaskRunnerResult {
+  task: string;
+  mode: KnowledgeTaskMode;
+  selected: ResearchSelectedNoteInfo[];
+  output: {
+    mode: KnowledgeTaskMode;
+    markdown: string;
+    json?: any;
+  };
+  createdNoteId?: number;
+  trace?: {
+    keywordHits: number[];
+    semanticSeedIds?: number[];
+    semanticAddedIds?: number[];
+  };
+}

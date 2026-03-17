@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import DashboardPage from "@/features/dashboard/DashboardPage";
-import GraphPage from "@/features/graph/pages/GraphPage";
-import GraphEvolutionPage from "@/features/graph/GraphEvolutionPage";
+import KnowledgeTasksPage from "@/features/research/KnowledgeTasksPage";
 import QuickAddPage from "@/features/notes/pages/QuickAddPage";
 import NoteList from "@/features/notes/components/NoteList";
 import NoteInput from "@/features/notes/components/NoteInput";
@@ -121,8 +120,6 @@ function App() {
   }, [orderBy]);
 
   // ── Route flags ───────────────────────────────────────────────────────────────
-  const isGraphPage =
-    location.pathname === "/graph" || location.pathname === "/graph-evolution";
   const path = location.pathname;
 
   // ── Render ────────────────────────────────────────────────────────────────────
@@ -140,46 +137,23 @@ function App() {
           </button>
 
           <div className="flex items-center gap-1.5">
-            {!isGraphPage ? (
-              <nav className="flex gap-1">
-                <NavBtn
-                  label="🏠 主控台"
-                  active={path === "/"}
-                  onClick={() => navigate("/")}
-                />
-                <NavBtn
-                  label="📝 筆記"
-                  active={path === "/notes"}
-                  onClick={() => navigate("/notes")}
-                />
-                <NavBtn
-                  label="🧩 知識圖譜"
-                  active={path === "/graph"}
-                  onClick={() => navigate("/graph")}
-                />
-              </nav>
-            ) : (
-              <nav className="flex gap-1">
-                {location.pathname === "/graph" ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate("/graph-evolution")}
-                    className="border-purple-400/60 text-purple-600 dark:text-purple-400"
-                  >
-                    🪄 查看演化
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate("/graph")}
-                  >
-                    ← 返回知識圖
-                  </Button>
-                )}
-              </nav>
-            )}
+            <nav className="flex gap-1">
+              <NavBtn
+                label="🏠 主控台"
+                active={path === "/"}
+                onClick={() => navigate("/")}
+              />
+              <NavBtn
+                label="📝 筆記"
+                active={path === "/notes"}
+                onClick={() => navigate("/notes")}
+              />
+              <NavBtn
+                label="🧭 Knowledge Tasks"
+                active={path === "/research" || path === "/tasks"}
+                onClick={() => navigate("/research")}
+              />
+            </nav>
             <ThemeToggle />
             <DiagnosticsPanel />
           </div>
@@ -247,11 +221,9 @@ function App() {
             }
           />
 
-          {/* 🧩 知識圖譜 */}
-          <Route path="/graph" element={<GraphPage />} />
-
-          {/* 🪄 知識演化視覺化 */}
-          <Route path="/graph-evolution" element={<GraphEvolutionPage />} />
+          {/* 🧭 Knowledge Tasks (primary: Brief; secondary: Writing; supporting: Review) */}
+          <Route path="/research" element={<KnowledgeTasksPage />} />
+          <Route path="/tasks" element={<KnowledgeTasksPage />} />
 
           {/* ⚡ Quick Add */}
           <Route path="/quick-add" element={<QuickAddPage />} />

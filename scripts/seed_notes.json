@@ -1,0 +1,114 @@
+[
+  {
+    "title": "Product Goals: Knowledge Tasks MVP",
+    "content": "Primary: generate concise briefs from scattered notes. Secondary: turn notes into drafts. Supporting: review and clean up overlaps.",
+    "tags": "goals,planning,brief,writing,review",
+    "type": "goal",
+    "createdAt": "2026-02-01 10:00:00"
+  },
+  {
+    "title": "User Pain Points",
+    "content": "Users have many short notes from meetings and research but lack a quick way to turn them into meeting briefs or drafts. They also accumulate duplicate notes over time.",
+    "tags": "research,user-pain,brief",
+    "type": "goal",
+    "createdAt": "2026-02-01 11:15:00"
+  },
+  {
+    "title": "Design: Deterministic Retrieval Pipeline",
+    "content": "Use keyword search first, then optional multi-seed semantic expansion (top 2-3 seeds). Deduplicate with keyword precedence. Fixed, auditable flow.",
+    "tags": "design,retrieval,pipeline,semantic",
+    "type": "design",
+    "createdAt": "2026-02-02 09:40:00"
+  },
+  {
+    "title": "Design: Tool Layer Reuse",
+    "content": "All tasks should reuse agent tools: searchNotes, semanticSearchNotes, getNoteById, createNote. No direct SQL from the runner.",
+    "tags": "design,tools,reuse",
+    "type": "design",
+    "createdAt": "2026-02-02 10:10:00"
+  },
+  {
+    "title": "Mode Spec: Brief",
+    "content": "Brief should return key updates, risks/blockers, and next steps. Keep it under 250 words and action-oriented.",
+    "tags": "spec,brief,output",
+    "type": "design",
+    "createdAt": "2026-02-03 14:05:00"
+  },
+  {
+    "title": "Mode Spec: Writing",
+    "content": "Writing transforms context into a draft with an optional title, an outline, and a draft body. The markdown should be readable.",
+    "tags": "spec,writing,output",
+    "type": "design",
+    "createdAt": "2026-02-03 14:20:00"
+  },
+  {
+    "title": "Mode Spec: Review",
+    "content": "Review focuses on maintenance: find likely duplicates, overlapping notes, and propose merge suggestions. Avoid claiming contradictions without evidence.",
+    "tags": "spec,review,maintenance",
+    "type": "design",
+    "createdAt": "2026-02-03 14:35:00"
+  },
+  {
+    "title": "Weekly Update: Week 1",
+    "content": "Completed tool layer scaffolding and search/semantic utilities. Risk: OpenAI quota in demos. Next: wire runner to UI and add provenance.",
+    "tags": "weekly,updates,risks,next-steps",
+    "type": "weekly",
+    "createdAt": "2026-02-04 17:20:00"
+  },
+  {
+    "title": "Blocking Issue: IPC Back-Compat",
+    "content": "We must keep run-research working for earlier builds. Solution: map to brief mode under new knowledge task runner.",
+    "tags": "blocker,ipc,compat",
+    "type": "blocker",
+    "createdAt": "2026-02-05 09:00:00"
+  },
+  {
+    "title": "Decision: Brief is Primary",
+    "content": "Prioritize Brief as the main job-to-be-done. Writing is secondary and Review is supportive. Emphasize this in UX copy and defaults.",
+    "tags": "decision,brief,priority",
+    "type": "decision",
+    "createdAt": "2026-02-05 11:30:00"
+  },
+  {
+    "title": "Weekly Update: Week 2",
+    "content": "Shipped Knowledge Tasks UI with mode selector and structured JSON blocks. Risk: dataset inconsistency during demos. Next: add local seed notes.",
+    "tags": "weekly,updates,risks,next-steps",
+    "type": "weekly",
+    "createdAt": "2026-02-11 16:10:00"
+  },
+  {
+    "title": "Overlap: Brief Spec (duplicate)",
+    "content": "A brief should summarize progress, flag risks or blockers, and list next actions; aim for a meeting-ready one‑pager. (Paraphrase of earlier brief spec)",
+    "tags": "overlap,duplicate,brief",
+    "type": "review-target",
+    "createdAt": "2026-02-12 09:50:00"
+  },
+  {
+    "title": "Overlap: Retrieval Pipeline Notes",
+    "content": "Retrieval should start with keywords, optionally expand semantically from top seeds, and remain deterministic/auditable. (Paraphrase of pipeline design)",
+    "tags": "overlap,retrieval,semantic",
+    "type": "review-target",
+    "createdAt": "2026-02-12 10:05:00"
+  },
+  {
+    "title": "Deprioritized: Real-time Chat Agent",
+    "content": "Cut scope: no multi-turn chat or planning. Focus on fixed-flow tasks grounded in local notes.",
+    "tags": "deprioritized,scope-cut,chat",
+    "type": "decision",
+    "createdAt": "2026-02-13 13:40:00"
+  },
+  {
+    "title": "Deprioritized: Web Crawler",
+    "content": "No web crawling for v1. Keep the system local-first with optional embeddings and simple AI summarization.",
+    "tags": "deprioritized,scope-cut,crawler",
+    "type": "decision",
+    "createdAt": "2026-02-13 14:10:00"
+  },
+  {
+    "title": "Writing: Cost Optimization Draft Cue",
+    "content": "Draft guidance: turn cloud cost notes into a proposal with title, outline, and a concise body covering actions and impact.",
+    "tags": "writing,proposal,cloud-cost",
+    "type": "design",
+    "createdAt": "2026-02-14 09:25:00"
+  }
+]

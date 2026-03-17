@@ -16,7 +16,9 @@ import {
 } from "./ipc/graphEvolution";
 import { registerSemanticIpc } from "./ipc/semantic";
 import { registerDevIpc } from "./ipc/dev";
+import { registerResearchIpc } from "./ipc/research";
 import { enqueueJob } from "./services/ai_job_queue";
+import { createNote as createNoteSvc } from "./services/notes_service";
 import { startAiJobWorker } from "./services/ai_job_worker";
 
 let db: sqlite3.Database;
@@ -112,6 +114,7 @@ app.whenReady().then(() => {
     registerGraphEvolutionIpc(db);
     registerInsertTripleIpc(db);
     registerDevIpc(db);
+    registerResearchIpc({ db });
 
     // 🧠 防止 Semantic IPC 重複註冊（熱重載保護）
     if (!(global as any).__SEMANTIC_IPC_INITIALIZED__) {
@@ -145,33 +148,17 @@ app.whenReady().then(() => {
    ✅ IPC：Quick Add 筆記寫入
 ==================================================== */
 ipcMain.handle("quick-add-note", async (_event, note) => {
-  return new Promise((resolve, reject) => {
-    const { content, tags } = note;
-    const createdAt = new Date().toISOString().replace("T", " ").split(".")[0];
-
-    db.run(
-      `INSERT INTO notes (content, tags, created_at) VALUES (?, ?, ?)`,
-      [content, tags || "", createdAt],
-      async function (err) {
-        if (err) {
-          logger.error("[QuickAdd] 新增筆記失敗", err);
-          return reject(err);
-        }
-        const noteId = this.lastID;
-        logger.info("[QuickAdd] 筆記已成功寫入", { noteId });
-
-        try {
-          await enqueueJob(db, noteId, "summary");
-          await enqueueJob(db, noteId, "triples");
-          await enqueueJob(db, noteId, "embedding");
-        } catch (e: any) {
-          logger.error("[QUEUE] enqueue failed after quick-add", { noteId, error: e?.message });
-        }
-
-        resolve({ success: true, id: noteId });
-      }
-    );
-  });
+  const { content, tags } = note;
+  const createdAt = new Date().toISOString().replace("T", " ").split(".")[0];
+  try {
+    const res = await createNoteSvc(db, { content, tags, createdAt });
+    if (!res.success) throw new Error(res.error || "createNote failed");
+    logger.info("[QuickAdd] 筆記已成功寫入", { noteId: res.id });
+    return res;
+  } catch (e) {
+    logger.error("[QuickAdd] 新增筆記失敗", e);
+    throw e;
+  }
 });
 
 /* ====================================================

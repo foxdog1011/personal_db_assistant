@@ -3,13 +3,18 @@
   "version": "1.0.0",
   "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "concurrently -k -n VITE,ELECTRON -c auto \"vite --host 127.0.0.1 --port 5173\" \"wait-on http://127.0.0.1:5173 && npm run electron-dev\"",
-    "electron-dev": "tsc --project tsconfig.electron.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron dist-electron/main.js",
+    "dev": "concurrently -k -n VITE,ELECTRON -c auto \"vite --host 127.0.0.1 --port 3012\" \"wait-on http://127.0.0.1:3012 && npm run electron-dev\"",
+    "electron-dev": "tsc --project tsconfig.electron.json && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:3012 electron dist-electron/main.js",
     "build": "tsc --project tsconfig.electron.json && vite build",
     "start": "electron dist-electron/main.js",
     "smoke": "npm run build && npm run start",
     "test": "vitest run",
-    "test:ui": "vitest"
+    "test:ui": "vitest",
+    "agent:smoke": "tsc --project tsconfig.electron.json && node dist-electron/agent/smoke.js",
+    "agent:research": "tsc --project tsconfig.electron.json && node dist-electron/agent/runner/smokeResearch.js",
+    "seed:notes": "tsc --project tsconfig.electron.json && node dist-electron/scripts/seedNotes.js",
+    "mcp": "tsc --project tsconfig.electron.json && node dist-electron/mcp/server.js",
+    "mcp:smoke": "tsc --project tsconfig.electron.json && node dist-electron/scripts/mcpSmoke.js"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
@@ -31,11 +36,15 @@
     "wait-on": "^9.0.1"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@types/react-router-dom": "^5.3.3",
     "dotenv": "^17.2.3",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.545.0",
     "node-fetch": "^3.3.2",
+    "@modelcontextprotocol/server": "^0.1.0",
+    "@modelcontextprotocol/transport-node": "^0.1.0",
+    "zod": "^3.23.8",
     "openai": "^5.23.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -43,6 +52,7 @@
     "react-router-dom": "^7.9.4",
     "sqlite3": "^5.1.6",
     "vis-data": "^7.1.4",
-    "vis-network": "^9.1.6"
+    "vis-network": "^9.1.6",
+    "zod": "^3.25.76"
   }
 }

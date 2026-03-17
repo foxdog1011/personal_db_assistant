@@ -102,6 +102,12 @@ export const ipc = {
   clearGraphData: () => getAPI().clearGraphData(),
   getNoteContent: async ({ id }: { id: number }) =>
     window.electronAPI.getNoteContent?.({ id }),
+
+  // 🔬 Agent Runner
+  runResearch: (args: import("@/types/electron-api").ResearchRunnerInput) =>
+    getAPI().runResearch(args),
+  runKnowledgeTask: (args: import("@/types/electron-api").KnowledgeTaskRunnerInput) =>
+    getAPI().runKnowledgeTask(args),
 };
 
 export default ipc;

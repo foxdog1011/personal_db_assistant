@@ -5,6 +5,14 @@
 
 ---
 
+## Screenshots
+
+![Dashboard](screenshots/home.png)
+![Notes](screenshots/notes.png)
+![Knowledge Tasks](screenshots/research.png)
+
+---
+
 ## Technical Highlights
 
 - **Full-stack desktop architecture** — designed and implemented the entire IPC bridge between an Electron main process and a React renderer, with a type-safe preload contract enforced at compile time
